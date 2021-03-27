@@ -1,9 +1,12 @@
 import logo200Image from 'assets/img/logo/logo_200.png';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
+import { withRouter } from 'react-router-dom';
 
+import { Button, Form, FormGroup, Input, Label } from 'reactstrap';
+import { post } from './axios';
 class AuthForm extends React.Component {
+  state = { email: '', password: '' };
   get isLogin() {
     return this.props.authState === STATE_LOGIN;
   }
@@ -18,8 +21,24 @@ class AuthForm extends React.Component {
     this.props.onChangeAuthState(authState);
   };
 
-  handleSubmit = event => {
-    event.preventDefault();
+  handleSubmit = async event => {
+    try {
+      event.preventDefault();
+      if (!this.state.email || !this.state.password) return;
+      // console.log(this.state.email, this.state.password);
+      const {
+        data: { data },
+      } = await post(`${process.env.REACT_APP_API}users/login`, {
+        email: this.state.email,
+        password: this.state.password,
+      });
+      sessionStorage.setItem('zer', data.token);
+      console.log(this.props);
+      this.props.history.push('/dashboard/home');
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   renderButtonText() {
@@ -35,7 +54,9 @@ class AuthForm extends React.Component {
 
     return buttonText;
   }
-
+  updateForm = (key, value) => {
+    this.setState({ [key]: value });
+  };
   render() {
     const {
       showLogo,
@@ -56,7 +77,8 @@ class AuthForm extends React.Component {
             <img
               src={logo200Image}
               className="rounded"
-              style={{ width: 60, height: 60, cursor: 'pointer' }}
+              // style={{ width: 60, height: 60, cursor: 'pointer' }}
+              style={{ height: 60, cursor: 'pointer' }}
               alt="logo"
               onClick={onLogoClick}
             />
@@ -64,11 +86,24 @@ class AuthForm extends React.Component {
         )}
         <FormGroup>
           <Label for={usernameLabel}>{usernameLabel}</Label>
-          <Input {...usernameInputProps} />
+          <Input
+            onChange={({ target: { value } }) =>
+              this.updateForm('email', value)
+            }
+            value={this.state.email}
+            {...usernameInputProps}
+          />
         </FormGroup>
         <FormGroup>
-          <Label for={passwordLabel}>{passwordLabel}</Label>
-          <Input {...passwordInputProps} />
+          <Label value={this.state.password} for={passwordLabel}>
+            {passwordLabel}
+          </Label>
+          <Input
+            onChange={({ target: { value } }) =>
+              this.updateForm('password', value)
+            }
+            {...passwordInputProps}
+          />
         </FormGroup>
         {this.isSignup && (
           <FormGroup>
@@ -76,22 +111,23 @@ class AuthForm extends React.Component {
             <Input {...confirmPasswordInputProps} />
           </FormGroup>
         )}
-        <FormGroup check>
+        {/* <FormGroup check>
           <Label check>
             <Input type="checkbox" />{' '}
             {this.isSignup ? 'Agree the terms and policy' : 'Remember me'}
           </Label>
-        </FormGroup>
+        </FormGroup> */}
         <hr />
         <Button
           size="lg"
           className="bg-gradient-theme-left border-0"
           block
-          onClick={this.handleSubmit}>
+          onClick={this.handleSubmit}
+        >
           {this.renderButtonText()}
         </Button>
 
-        <div className="text-center pt-1">
+        {/* <div className="text-center pt-1">
           <h6>or</h6>
           <h6>
             {this.isSignup ? (
@@ -104,7 +140,7 @@ class AuthForm extends React.Component {
               </a>
             )}
           </h6>
-        </div>
+        </div> */}
 
         {children}
       </Form>
@@ -148,4 +184,4 @@ AuthForm.defaultProps = {
   onLogoClick: () => {},
 };
 
-export default AuthForm;
+export default withRouter(AuthForm);
