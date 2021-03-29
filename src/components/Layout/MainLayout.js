@@ -20,22 +20,7 @@ import PageSpinner from '../PageSpinner';
 import NotificationSystem from 'react-notification-system';
 import { get } from 'components/axios';
 import { NOTIFICATION_SYSTEM_STYLE } from 'utils/constants';
-const AlertPage = React.lazy(() => import('../../pages/AlertPage'));
-const AuthModalPage = React.lazy(() => import('../../pages/AuthModalPage'));
-const BadgePage = React.lazy(() => import('../../pages/BadgePage'));
-const ButtonGroupPage = React.lazy(() => import('../../pages/ButtonGroupPage'));
-const ButtonPage = React.lazy(() => import('../../pages/ButtonPage'));
-const CardPage = React.lazy(() => import('../../pages/CardPage'));
-const ChartPage = React.lazy(() => import('../../pages/ChartPage'));
 const DashboardPage = React.lazy(() => import('../../pages/DashboardPage'));
-const DropdownPage = React.lazy(() => import('../../pages/DropdownPage'));
-const FormPage = React.lazy(() => import('../../pages/FormPage'));
-const InputGroupPage = React.lazy(() => import('../../pages/InputGroupPage'));
-const ModalPage = React.lazy(() => import('../../pages/ModalPage'));
-const ProgressPage = React.lazy(() => import('../../pages/ProgressPage'));
-const TablePage = React.lazy(() => import('../../pages/TablePage'));
-const TypographyPage = React.lazy(() => import('../../pages/TypographyPage'));
-const WidgetPage = React.lazy(() => import('../../pages/WidgetPage'));
 const EmployerSetup = React.lazy(() => import('../../pages/EmployerSetup'));
 const LenderSetup = React.lazy(() => import('../../pages/LenderSetup'));
 const UploadDeductions = React.lazy(() =>
@@ -43,6 +28,9 @@ const UploadDeductions = React.lazy(() =>
 );
 const SearchDeductions = React.lazy(() =>
   import('../../pages/SearchDeductions'),
+);
+const AddLenderAccount = React.lazy(() =>
+  import('../../pages/AddLenderAccount'),
 );
 class MainLayout extends React.Component {
   state = { pageInit: true, user: {}, loading: false };
@@ -63,6 +51,8 @@ class MainLayout extends React.Component {
   }
   async componentDidMount() {
     try {
+      let userr = sessionStorage.getItem('zer');
+      if (!userr) return this.props.history.push('/login');
       let url = `${process.env.REACT_APP_API}users/ck`;
 
       const {
@@ -74,7 +64,7 @@ class MainLayout extends React.Component {
       console.log(error);
     }
   }
-  componentWillReceiveProps({ breakpoint }) {
+  unsafe_componentWillReceiveProps({ breakpoint }) {
     if (breakpoint !== this.props.breakpoint) {
       this.checkBreakpoint(breakpoint);
     }
@@ -227,86 +217,17 @@ class MainLayout extends React.Component {
                   />
                   <Route
                     exact
-                    path="/dashboard/login-modal"
+                    path="/dashboard/addaccount"
                     render={props => (
-                      <AuthModalPage
+                      <AddLenderAccount
+                        changeLoading={this.changeLoading}
                         user={this.state.user}
                         notify={this.handleNotification}
                         {...props}
                       />
                     )}
                   />
-                  <Route
-                    exact
-                    path="/dashboard/buttons"
-                    render={props => <ButtonPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/cards"
-                    render={props => <CardPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/widgets"
-                    render={props => <WidgetPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/typography"
-                    render={props => <TypographyPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/alerts"
-                    render={props => <AlertPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/tables"
-                    render={props => <TablePage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/badges"
-                    render={props => <BadgePage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/button-groups"
-                    render={props => <ButtonGroupPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/dropdowns"
-                    render={props => <DropdownPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/progress"
-                    render={props => <ProgressPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/modals"
-                    render={props => <ModalPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/forms"
-                    render={props => <FormPage {...props} />}
-                  />
-                  <Route
-                    exact
-                    path="/dashboard/input-groups"
-                    render={props => <InputGroupPage {...props} />}
-                  />
 
-                  <Route
-                    exact
-                    path="/dashboard/charts"
-                    render={props => <ChartPage {...props} />}
-                  />
                   <Redirect to="/404" />
                 </Switch>
               </Suspense>

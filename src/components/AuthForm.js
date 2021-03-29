@@ -119,10 +119,11 @@ class AuthForm extends React.Component {
         </FormGroup> */}
         <hr />
         <Button
+          type="submit"
           size="lg"
           className="bg-gradient-theme-left border-0"
           block
-          onClick={this.handleSubmit}
+          // onClick={this.handleSubmit}
         >
           {this.renderButtonText()}
         </Button>
@@ -168,16 +169,19 @@ AuthForm.defaultProps = {
   showLogo: true,
   usernameLabel: 'Email',
   usernameInputProps: {
+    required: true,
     type: 'email',
     placeholder: 'your@email.com',
   },
   passwordLabel: 'Password',
   passwordInputProps: {
+    required: true,
     type: 'password',
     placeholder: 'your password',
   },
   confirmPasswordLabel: 'Confirm Password',
   confirmPasswordInputProps: {
+    required: true,
     type: 'password',
     placeholder: 'confirm your password',
   },

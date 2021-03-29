@@ -18,27 +18,72 @@ import {
 import PageSpinner from 'components/PageSpinner';
 import Autosuggest from 'react-autosuggest';
 import 'components/autosuggest.css';
-import { post, get } from 'components/axios';
+import { post, get, patch } from 'components/axios';
 import moment from 'moment';
-import { CSVReader } from 'react-papaparse';
+import { CSVReader, CSVDownloader } from 'react-papaparse';
+import numeral from 'numeral';
 
 const buttonRef = React.createRef();
 
 const UploadDeductions = props => {
   React.useEffect(() => {
-    //  loadmore();
+    getEmployers();
+    loadmore();
   }, []);
+
+  const getEmployers = async () => {
+    try {
+      const {
+        data: { data },
+      } = await get(
+        `${process.env.REACT_APP_API}employers?select=name,_id&limit=-1`,
+      );
+      setEmployers(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const [loadMore, setLoadMore] = useState(false);
   const [lenders, setLenders] = useState([]);
   const [lender, setLender] = useState('');
   const [lenderId, setLenderId] = useState('');
   const [lenderSuggestions, setLenderSuggestion] = useState([]);
+  const [employers, setEmployers] = useState([]);
+
   const [employer, setEmployer] = useState('');
   const [employerId, setEmployerId] = useState('');
   const [employerSuggestions, setEmployerSuggestions] = useState([]);
 
   const [ippisNumber, setIppisNumber] = useState('');
   const [amount, setAmount] = useState('');
+  const [deductions, setDeductions] = useState([]);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [tenure, setTenure] = useState(1);
+  const [errorCode, setErrorCode] = useState(null);
+  const [isUpdate, setIsUpdate] = useState(false);
+
+  const loadmore = async isNew => {
+    try {
+      setLoadMore(true);
+      const {
+        data: { data },
+      } = await get(
+        `${
+          process.env.REACT_APP_API
+        }uploaddeductions?limit=10&sort=-createdAt&&skip=${
+          isNew ? 0 : deductions.length
+        }&uploadedBy=${props.user._id}&populate=employer`,
+      );
+      isNew ? setDeductions(data) : setDeductions([...deductions, ...data]);
+
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoadMore(false);
+    }
+  };
 
   const handleSubmit = async e => {
     try {
@@ -50,18 +95,49 @@ const UploadDeductions = props => {
           'error',
         );
       props.changeLoading();
-      const { data } = await post(`${process.env.REACT_APP_API}deductions`, {
-        lender: props.user.lender || props.user._id,
-        uploadedBy: props.user._id,
-        employer: employerId,
-        amount,
-        ippisNumber,
-      });
-      console.log(data);
-      props.notify('', 'Deduction Uploaded Successfully');
+
+      // const { data } = await post(`${process.env.REACT_APP_API}deductions`, {
+      //   lender: props.user.lender || props.user._id,
+      //   uploadedBy: props.user._id,
+      //   employer: employerId,
+      //   amount,
+      //   ippisNumber,
+      // });
+      if (!isUpdate) {
+        await post(`${process.env.REACT_APP_API}uploaddeductions`, {
+          uploadedBy: props.user._id,
+          employer: employerId,
+          amount,
+          ippisNumber,
+          firstName,
+          lastName,
+          tenure,
+        });
+      } else {
+        await patch(
+          `${process.env.REACT_APP_API}uploaddeductions/${isUpdate}`,
+          {
+            lastName,
+          },
+        );
+      }
+      props.notify(
+        '',
+        `Deduction ${isUpdate ? 'Updated' : 'Uploaded'} Successfully`,
+      );
     } catch (error) {
       console.log(error);
     } finally {
+      setIsUpdate(false);
+      setErrorCode(null);
+      setEmployer('');
+      setEmployerId('');
+      setIppisNumber('');
+      setFirstName('');
+      setLastName('');
+      setAmount('');
+      setTenure(1);
+      loadmore(true);
       props.changeLoading();
     }
   };
@@ -115,7 +191,8 @@ const UploadDeductions = props => {
   );
 
   const employerInputProps = {
-    placeholder: 'Select a Employer.....',
+    disabled: errorCode && errorCode === 5,
+    placeholder: 'Select an Employer',
     value: employer,
     required: true,
     onChange: (event, { newValue }) => {
@@ -178,9 +255,13 @@ const UploadDeductions = props => {
             datum =>
               datum.data['EMPLOYER'] &&
               datum.data['AMOUNT'] &&
-              datum.data['STAFF NUMBER'],
+              datum.data['STAFF NUMBER'] &&
+              datum.data['FIRST NAME'] &&
+              datum.data['LAST NAME'] &&
+              datum.data['NO OF INSTALLMENTS'],
           )
           .map(datum => datum.data);
+        props.changeLoading();
         // console.log(upload);
         await post(`${process.env.REACT_APP_API}uploaddeductions`, upload);
         props.notify(
@@ -193,6 +274,9 @@ const UploadDeductions = props => {
     } catch (error) {
       console.log(error);
       alert('An error occured');
+    } finally {
+      loadmore(true);
+      props.changeLoading();
     }
   };
 
@@ -212,6 +296,10 @@ const UploadDeductions = props => {
       buttonRef.current.removeFile(e);
     }
   };
+  const openInNewTab = url => {
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+    if (newWindow) newWindow.opener = null;
+  };
 
   return (
     <Page
@@ -223,21 +311,114 @@ const UploadDeductions = props => {
     >
       <Row>
         <Col>
-          <Button size="sm" outline color="primary">
-            View Sample CSV
-          </Button>{' '}
-          <a
-            rel="noopener noreferrer"
-            href={process.env.REACT_APP_EMPLISTCSV}
-            className="btn btn-outline-secondary btn-sm"
-            target="_blank"
+          <Button
+            onClick={() => openInNewTab(process.env.REACT_APP_SAMPLEUPLOADCSV)}
+            size="sm"
+            outline
+            color="primary"
           >
-            Download Employer List
-          </a>
+            View Sample Upload CSV
+          </Button>{' '}
+          {employers.length ? (
+            <CSVDownloader
+              data={employers}
+              type="button"
+              filename={'employers'}
+              bom={true}
+              className="btn btn-outline-secondary btn-sm"
+            >
+              Download Employer&apos;s List
+            </CSVDownloader>
+          ) : null}
         </Col>
       </Row>
       <Row>
-        <Col xl={12} lg={12} md={12}>
+        <Col xl={8} lg={12} md={12}>
+          <Card>
+            <CardBody>
+              <Table striped hover responsive>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Staff Number</th>
+                    <th>Amount</th>
+                    <th>Uploaded On</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deductions.map(
+                    (
+                      {
+                        createdAt,
+                        _id,
+                        errorCode,
+                        log,
+                        ippisNumber,
+                        amount,
+                        firstName,
+                        lastName,
+                        employer,
+                        status,
+                        tenure,
+                      },
+                      idx,
+                    ) => (
+                      <tr key={_id}>
+                        <th scope="row">{idx + 1}</th>
+                        <td>{firstName || 'N/A'}</td>
+                        <td>{lastName || 'N/A'}</td>
+                        <td>{ippisNumber}</td>
+                        <td>{numeral(amount).format('0,0.00')}</td>
+                        <td>{moment(createdAt).format('lll')}</td>
+                        <td>
+                          {errorCode === 5 ? (
+                            <Button
+                              onClick={() => {
+                                setEmployer(employer.name);
+                                setEmployerId(employer._id);
+                                setIppisNumber(ippisNumber);
+                                setFirstName(firstName);
+                                setLastName(lastName);
+                                setAmount(amount);
+                                setTenure(tenure);
+                                setErrorCode(errorCode);
+                                setIsUpdate(_id);
+                              }}
+                              size="sm"
+                              color="danger"
+                            >
+                              Edit Last Name
+                            </Button>
+                          ) : (
+                            status
+                          )}
+                        </td>
+                        <td>{errorCode ? log : 'N/A'}</td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </Table>
+              <Row>
+                <Col md={3} className="mx-auto my-3 text-center">
+                  {loadMore ? (
+                    <PageSpinner />
+                  ) : (
+                    <Button onClick={loadmore} outline color="primary">
+                      Load More
+                    </Button>
+                  )}
+                </Col>
+              </Row>{' '}
+            </CardBody>
+          </Card>
+        </Col>
+
+        <Col xl={4} lg={12} md={12}>
           <Card>
             <CardHeader className="d-flex justify-content-between align-items-center">
               <CardText>Upload</CardText>
@@ -254,7 +435,12 @@ const UploadDeductions = props => {
                   onRemoveFile={handleOnRemoveFile}
                 >
                   {({ file }) => (
-                    <Button onClick={handleOpenDialog} outline color="warning">
+                    <Button
+                      size="sm"
+                      onClick={handleOpenDialog}
+                      outline
+                      color="warning"
+                    >
                       {file ? file.name : 'Upload CSV'}
                     </Button>
                   )}
@@ -264,10 +450,10 @@ const UploadDeductions = props => {
             <CardBody>
               <Form onSubmit={handleSubmit}>
                 {/* <FormGroup row>
-                  <Label for="exampleName" sm={2}>
+                  <Label for="exampleName" sm={4}>
                     Lender
                   </Label>
-                  <Col sm={10}>
+                  <Col sm={8}>
                     <Autosuggest
                       id={'lender'}
                       suggestions={lenderSuggestions}
@@ -286,10 +472,41 @@ const UploadDeductions = props => {
                   </Col>
                 </FormGroup> */}
                 <FormGroup row>
-                  <Label for="exampleName" sm={2}>
+                  <Label for="exampleName" sm={4}>
+                    First Name
+                  </Label>
+                  <Col sm={8}>
+                    <Input
+                      disabled={errorCode && errorCode === 5}
+                      required
+                      value={firstName}
+                      onChange={({ target: { value } }) => setFirstName(value)}
+                      type="text"
+                      name="fname"
+                      placeholder="ifeoluwa"
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup row>
+                  <Label for="exampleName" sm={4}>
+                    Last Name
+                  </Label>
+                  <Col sm={8}>
+                    <Input
+                      required
+                      value={lastName}
+                      onChange={({ target: { value } }) => setLastName(value)}
+                      type="text"
+                      name="lname"
+                      placeholder="olanipekun"
+                    />
+                  </Col>
+                </FormGroup>
+                <FormGroup row>
+                  <Label for="exampleName" sm={4}>
                     Employer
                   </Label>
-                  <Col sm={10}>
+                  <Col sm={8}>
                     <Autosuggest
                       id={'employer'}
                       suggestions={employerSuggestions}
@@ -308,11 +525,12 @@ const UploadDeductions = props => {
                   </Col>
                 </FormGroup>
                 <FormGroup row>
-                  <Label for="exampleName" sm={2}>
+                  <Label for="exampleName" sm={4}>
                     Staff Number(IPPIS Number/Payroll No)
                   </Label>
-                  <Col sm={10}>
+                  <Col sm={8}>
                     <Input
+                      disabled={errorCode && errorCode === 5}
                       required
                       value={ippisNumber}
                       onChange={({ target: { value } }) =>
@@ -325,11 +543,12 @@ const UploadDeductions = props => {
                   </Col>
                 </FormGroup>
                 <FormGroup row>
-                  <Label for="exampleName" sm={2}>
+                  <Label for="exampleName" sm={4}>
                     Deduction Amount
                   </Label>
-                  <Col sm={10}>
+                  <Col sm={8}>
                     <Input
+                      disabled={errorCode && errorCode === 5}
                       required
                       value={amount}
                       onChange={({ target: { value } }) => setAmount(value)}
@@ -339,9 +558,28 @@ const UploadDeductions = props => {
                     />
                   </Col>
                 </FormGroup>
+
+                <FormGroup row>
+                  <Label for="exampleName" sm={4}>
+                    No of Installments(Months)
+                  </Label>
+                  <Col sm={8}>
+                    <Input
+                      disabled={errorCode && errorCode === 5}
+                      required
+                      value={tenure}
+                      onChange={({ target: { value } }) => setTenure(value)}
+                      type="number"
+                      name="tenure"
+                      placeholder="1"
+                    />
+                  </Col>
+                </FormGroup>
                 <FormGroup check row>
                   <Col sm={{ size: 10, offset: 2 }}>
-                    <Button type="submit">Submit</Button>
+                    <Button type="submit">
+                      {isUpdate ? 'Update' : 'Submit'}
+                    </Button>
                   </Col>
                 </FormGroup>
               </Form>

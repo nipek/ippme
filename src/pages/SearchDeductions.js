@@ -74,9 +74,9 @@ class SearchDeductions extends React.Component {
       } = await get(
         `${
           process.env.REACT_APP_API
-        }deductions?limit=1&sort=-createdAt&ippisNumber=${
+        }deductions?limit=10&sort=-createdAt&ippisNumber=${
           this.state.ippis
-        }&populate=lender employer&skip=${
+        }&populate=lender employer staff&skip=${
           newSearch ? 0 : this.state.deductions.length
         }`,
       );
@@ -89,7 +89,7 @@ class SearchDeductions extends React.Component {
       } else {
         this.setState({ deductions: data });
       }
-
+      if (!data.length) this.props.notify('', `${this.state.ippis} not found`);
       console.log(data);
     } catch (error) {
       console.log(error);
@@ -130,10 +130,13 @@ class SearchDeductions extends React.Component {
                   <thead>
                     <tr>
                       <th>#</th>
+                      <th>First Name</th>
+                      <th>Last Name</th>
                       <th>Lender Name</th>
                       <th>Employer Name</th>
                       <th>Staff Number(IPPIS)</th>
                       <th>Amount</th>
+                      <th>Tenure</th>
                       <th>Uploaded On</th>
                     </tr>
                   </thead>
@@ -146,17 +149,21 @@ class SearchDeductions extends React.Component {
                           employer,
                           ippisNumber,
                           amount,
+                          staff,
+                          tenure,
                           _id,
                         },
                         idx,
                       ) => (
                         <tr key={_id}>
                           <th scope="row">{idx + 1}</th>
+                          <td>{staff?.firstName}</td>
+                          <td>{staff?.lastName}</td>
                           <td>{lender.businessName}</td>
                           <td>{employer.name}</td>
                           <td>{ippisNumber}</td>
                           <td>{numeral(amount).format('0,0.00')}</td>
-
+                          <td>{tenure}</td>
                           <td>{moment(createdAt).format('lll')}</td>
                         </tr>
                       ),

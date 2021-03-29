@@ -3,6 +3,9 @@ import GAListener from 'components/GAListener';
 import { EmptyLayout, LayoutRoute, MainLayout } from 'components/Layout';
 import PageSpinner from 'components/PageSpinner';
 import AuthPage from 'pages/AuthPage';
+import ResetPassword from 'pages/ResetPassword';
+import NotFound from 'pages/NotFound';
+
 import React from 'react';
 import componentQueries from 'react-component-queries';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
@@ -18,6 +21,9 @@ class App extends React.Component {
       <BrowserRouter basename={getBasename()}>
         <GAListener>
           <Switch>
+            <Route exact path="/">
+              <Redirect to="/login" />
+            </Route>
             <LayoutRoute
               exact
               path="/login"
@@ -33,6 +39,12 @@ class App extends React.Component {
               component={props => (
                 <AuthPage {...props} authState={STATE_SIGNUP} />
               )}
+            />
+            <LayoutRoute
+              exact
+              path="/resetpassword/:tk"
+              layout={EmptyLayout}
+              component={props => <ResetPassword {...props} />}
             />
             <Route
               path="/dashboard"
@@ -67,7 +79,7 @@ class App extends React.Component {
             </MainLayout>
             <Redirect to="/" /> */}
 
-            {/* <Route path="*" component={Homelayout(PageNotFound)} /> */}
+            <Route path="*" component={NotFound} />
           </Switch>
         </GAListener>
       </BrowserRouter>

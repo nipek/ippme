@@ -18,13 +18,13 @@ import {
 import PageSpinner from 'components/PageSpinner';
 import { post, get } from 'components/axios';
 import moment from 'moment';
-const LenderSetup = props => {
+import CardText from 'reactstrap/lib/CardText';
+const AddLenderAccount = props => {
   React.useEffect(() => {
     loadmore();
   }, []);
   const [loadMore, setLoadMore] = useState(false);
   const [lenders, setLenders] = useState([]);
-  const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
 
   const loadmore = async isNew => {
@@ -33,11 +33,9 @@ const LenderSetup = props => {
       const {
         data: { data },
       } = await get(
-        `${
-          process.env.REACT_APP_API
-        }users?limit=10&sort=-createdAt&isSubAccount=false&skip=${
-          isNew ? 0 : lenders.length
-        }&isLender=true`,
+        `${process.env.REACT_APP_API}users?limit=10&sort=-createdAt&lender=${
+          props.user._id
+        }&skip=${isNew ? 0 : lenders.length}&isLender=true`,
       );
       isNew ? setLenders(data) : setLenders([...lenders, ...data]);
 
@@ -53,14 +51,13 @@ const LenderSetup = props => {
       e.preventDefault();
       props.changeLoading();
       const { data } = await post(
-        `${process.env.REACT_APP_API}users/setuplender`,
+        `${process.env.REACT_APP_API}users/setupsublender`,
         {
-          businessName,
           email,
         },
       );
       console.log(data);
-      props.notify('', 'Lender Created Successfully');
+      props.notify('', 'Account Created Successfully');
     } catch (error) {
       console.log(error);
     } finally {
@@ -69,7 +66,13 @@ const LenderSetup = props => {
     }
   };
   return (
-    <Page title="Lenders" breadcrumbs={[{ name: 'Lenders', active: true }]}>
+    <Page
+      title="Account"
+      breadcrumbs={[
+        { name: 'setup', active: false },
+        { name: 'account', active: true },
+      ]}
+    >
       <Row>
         <Col xl={6} lg={12} md={12}>
           <Card>
@@ -78,35 +81,39 @@ const LenderSetup = props => {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Business Name</th>
                     <th>Email</th>
                     <th>Created At</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {lenders.map(
-                    ({ createdAt, businessName, _id, email }, idx) => (
-                      <tr key={_id}>
-                        <th scope="row">{idx + 1}</th>
-                        <td>{businessName}</td>
-                        <td>{email}</td>
-                        <td>{moment(createdAt).format('lll')}</td>
-                      </tr>
-                    ),
-                  )}
-                </tbody>
+                {!lenders.length ? (
+                  <CardText>No data found</CardText>
+                ) : (
+                  <tbody>
+                    {lenders.map(
+                      ({ createdAt, businessName, _id, email }, idx) => (
+                        <tr key={_id}>
+                          <th scope="row">{idx + 1}</th>
+                          <td>{email}</td>
+                          <td>{moment(createdAt).format('lll')}</td>
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                )}
               </Table>
-              <Row>
-                <Col md={3} className="mx-auto my-3 text-center">
-                  {loadMore ? (
-                    <PageSpinner />
-                  ) : (
-                    <Button onClick={loadmore} outline color="primary">
-                      Load More
-                    </Button>
-                  )}
-                </Col>
-              </Row>{' '}
+              {lenders.length ? (
+                <Row>
+                  <Col md={3} className="mx-auto my-3 text-center">
+                    {loadMore ? (
+                      <PageSpinner />
+                    ) : (
+                      <Button onClick={loadmore} outline color="primary">
+                        Load More
+                      </Button>
+                    )}
+                  </Col>
+                </Row>
+              ) : null}{' '}
             </CardBody>
           </Card>
         </Col>
@@ -116,23 +123,6 @@ const LenderSetup = props => {
             <CardHeader>Create Lender</CardHeader>
             <CardBody>
               <Form onSubmit={handleSubmit}>
-                <FormGroup row>
-                  <Label for="exampleName" sm={2}>
-                    Business Name
-                  </Label>
-                  <Col sm={10}>
-                    <Input
-                      required
-                      value={businessName}
-                      onChange={({ target: { value } }) =>
-                        setBusinessName(value)
-                      }
-                      type="text"
-                      name="name"
-                      placeholder="Kona"
-                    />
-                  </Col>
-                </FormGroup>
                 <FormGroup row>
                   <Label for="exampleName" sm={2}>
                     Email
@@ -162,4 +152,4 @@ const LenderSetup = props => {
   );
 };
 
-export default LenderSetup;
+export default AddLenderAccount;

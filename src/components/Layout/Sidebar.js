@@ -102,6 +102,7 @@ const navSetups = [
     exact: false,
     Icon: MdAccountCircle,
     isLender: true,
+    isForSubAccount: false,
   },
   {
     to: '/dashboard/employers',
@@ -109,6 +110,7 @@ const navSetups = [
     exact: false,
     Icon: MdAccountCircle,
     isLender: false,
+    isForSubAccount: false,
   },
   {
     to: '/dashboard/lenders',
@@ -116,6 +118,7 @@ const navSetups = [
     exact: false,
     Icon: MdViewCarousel,
     isLender: false,
+    isForSubAccount: false,
   },
 ];
 const pageContents = [
@@ -162,8 +165,8 @@ class Sidebar extends React.Component {
     isOpenComponents: true,
     isOpenContents: true,
     isOpenPages: true,
-    isOpenSetup: false,
-    isOpenDeductions: false,
+    isOpenSetup: true,
+    isOpenDeductions: true,
   };
 
   handleClick = name => () => {
@@ -287,9 +290,10 @@ class Sidebar extends React.Component {
             </NavItem>
             <Collapse isOpen={this.state.isOpenSetup}>
               {navSetups.map(
-                ({ to, name, exact, Icon, isLender }, index) =>
+                ({ to, name, exact, Icon, isLender, isForSubAccount }, index) =>
                   (isLender === 'all' ||
-                    this.props.user.isLender === isLender) && (
+                    (this.props.user.isLender === isLender &&
+                      this.props.user.isSubAccount === isForSubAccount)) && (
                     <NavItem key={index} className={bem.e('nav-item')}>
                       <BSNavLink
                         id={`navItem-${name}-${index}`}

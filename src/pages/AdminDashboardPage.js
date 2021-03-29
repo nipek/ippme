@@ -83,7 +83,7 @@ class AdminDashboardPage extends React.Component {
       const {
         data: { data },
       } = await get(
-        `${process.env.REACT_APP_API}users?isLender=true&limit=5&sort=-createdAt`,
+        `${process.env.REACT_APP_API}users?isSubAccount=false&isLender=true&limit=5&sort=-createdAt`,
       );
       this.setState({ lenders: data });
       console.log(data, ' data');

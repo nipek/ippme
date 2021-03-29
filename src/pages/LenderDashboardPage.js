@@ -70,13 +70,19 @@ class LenderDashboardPage extends React.Component {
       const {
         data: { data },
       } = await get(
-        `${process.env.REACT_APP_API}deductions?limit=1&sort=-createdAt&lender=${this.props.user._id}&populate=lender employer&skip=${this.state.deductions.length}`,
+        `${
+          process.env.REACT_APP_API
+        }deductions?limit=10&sort=-createdAt&lender=${
+          this.props.user.lender || this.props.user._id
+        }&populate=lender employer&skip=${this.state.deductions.length}`,
       );
+
       this.setState(prevState => {
         return {
           deductions: [...prevState.deductions, ...data],
         };
       });
+
       console.log(data);
     } catch (error) {
       console.log(error);
@@ -99,7 +105,13 @@ class LenderDashboardPage extends React.Component {
             <Card>
               <CardBody className="d-flex justify-content-between align-items-center">
                 <CardText>Uploaded Deductions</CardText>
-                <Button outline color="primary">
+                <Button
+                  onClick={() =>
+                    this.props.history.push('/dashboard/deductions')
+                  }
+                  outline
+                  color="primary"
+                >
                   Add Deduction
                 </Button>
               </CardBody>

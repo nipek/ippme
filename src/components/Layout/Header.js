@@ -92,6 +92,18 @@ class Header extends React.Component {
         <Nav navbar className={bem.e('nav-right')}>
           <NavItem className="d-inline-flex">
             <NavLink id="Popover1" className="position-relative">
+              <MdExitToApp
+                size={25}
+                className="text-secondary can-click"
+                onClick={() => {
+                  sessionStorage.clear();
+                  window.location.reload();
+                }}
+              />
+            </NavLink>
+          </NavItem>
+          {/* <NavItem className="d-inline-flex">
+            <NavLink id="Popover1" className="position-relative">
               {isNotificationConfirmed ? (
                 <MdNotificationsNone
                   size={25}
@@ -164,6 +176,7 @@ class Header extends React.Component {
               </PopoverBody>
             </Popover>
           </NavItem>
+       */}
         </Nav>
       </Navbar>
     );

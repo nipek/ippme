@@ -26,15 +26,18 @@ const EmployerSetup = props => {
   const [employers, setEmployers] = useState([]);
   const [name, setName] = useState('');
 
-  const loadmore = async () => {
+  const loadmore = async isNew => {
     try {
       setLoadMore(true);
       const {
         data: { data },
       } = await get(
-        `${process.env.REACT_APP_API}employers?limit=1&sort=name&skip=${employers.length}`,
+        `${process.env.REACT_APP_API}employers?limit=10&sort=name&skip=${
+          isNew ? 0 : employers.length
+        }`,
       );
-      setEmployers([...employers, ...data]);
+      isNew ? setEmployers(data) : setEmployers([...employers, ...data]);
+
       console.log(data);
     } catch (error) {
       console.log(error);
@@ -54,7 +57,7 @@ const EmployerSetup = props => {
     } catch (error) {
       console.log(error);
     } finally {
-      loadmore();
+      loadmore(true);
       props.changeLoading();
     }
   };
