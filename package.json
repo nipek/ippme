@@ -30,6 +30,7 @@
     "react-scripts": "^4.0.3",
     "react-simple-maps": "^0.12.1",
     "react-sizeme": "^2.5.2",
+    "react-to-print": "^2.12.3",
     "reactstrap": "^7.1.0",
     "victory": "^32.0.0"
   },

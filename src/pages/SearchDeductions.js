@@ -1,36 +1,7 @@
-import { AnnouncementCard, TodosCard } from 'components/Card';
-import HorizontalAvatarList from 'components/HorizontalAvatarList';
-import MapWithBubbles from 'components/MapWithBubbles';
 import Page from 'components/Page';
-import ProductMedia from 'components/ProductMedia';
-import Employers from 'components/Employers';
-import Lenders from 'components/Lenders';
 
-import SupportTicket from 'components/SupportTicket';
-import UserProgressTable from 'components/UserProgressTable';
-import { IconWidget, NumberWidget } from 'components/Widget';
-import { getStackLineChart, stackLineChartOptions } from 'demos/chartjs';
-import {
-  avatarsData,
-  chartjs,
-  productsData,
-  supportTicketsData,
-  todosData,
-  userProgressTableData,
-} from 'demos/dashboardPage';
 import React from 'react';
-import { Bar, Line } from 'react-chartjs-2';
-import {
-  MdBubbleChart,
-  MdInsertChart,
-  MdPersonPin,
-  MdPieChart,
-  MdRateReview,
-  MdShare,
-  MdShowChart,
-  MdThumbUp,
-} from 'react-icons/md';
-import InfiniteCalendar from 'react-infinite-calendar';
+
 import {
   Badge,
   Button,
@@ -53,7 +24,9 @@ import { post, get } from 'components/axios';
 import moment from 'moment';
 import numeral from 'numeral';
 import SearchInput from 'components/SearchInput';
-class SearchDeductions extends React.Component {
+import ReactToPrint from 'react-to-print';
+
+class SearchDeductions extends React.PureComponent {
   state = {
     deductions: [],
     loading: false,
@@ -80,7 +53,13 @@ class SearchDeductions extends React.Component {
           newSearch ? 0 : this.state.deductions.length
         }`,
       );
-      if (!newSearch) {
+
+      //did user change ippis number and click on load more
+      //if ippis number differs, show new data with new ippis number
+      if (
+        !newSearch &&
+        this.state.ippis === this.state.deductions[0].ippisNumber
+      ) {
         this.setState(prevState => {
           return {
             deductions: [...prevState.deductions, ...data],
@@ -89,7 +68,8 @@ class SearchDeductions extends React.Component {
       } else {
         this.setState({ deductions: data });
       }
-      if (!data.length) this.props.notify('', `${this.state.ippis} not found`);
+      if (!data.length)
+        this.props.notify('', `No more data found for ${this.state.ippis}`);
       console.log(data);
     } catch (error) {
       console.log(error);
@@ -124,52 +104,26 @@ class SearchDeductions extends React.Component {
                   }}
                   search={this.state.ippis}
                 />
+                <ReactToPrint
+                  documentTitle={`${this.state.ippis} deductions`}
+                  trigger={() => {
+                    // NOTE: could just as easily return <SomeComponent />. Do NOT pass an `onClick` prop
+                    // to the root node of the returned component as it will be overwritten.
+                    return (
+                      <Button size="sm" color="primary" outline>
+                        Print
+                      </Button>
+                    );
+                  }}
+                  content={() => this.componentRef}
+                />
               </CardBody>
               <CardBody>
-                <Table striped hover responsive>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>First Name</th>
-                      <th>Last Name</th>
-                      <th>Lender Name</th>
-                      <th>Employer Name</th>
-                      <th>Staff Number(IPPIS)</th>
-                      <th>Amount</th>
-                      <th>Tenure</th>
-                      <th>Uploaded On</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.state.deductions.map(
-                      (
-                        {
-                          createdAt,
-                          lender,
-                          employer,
-                          ippisNumber,
-                          amount,
-                          staff,
-                          tenure,
-                          _id,
-                        },
-                        idx,
-                      ) => (
-                        <tr key={_id}>
-                          <th scope="row">{idx + 1}</th>
-                          <td>{staff?.firstName}</td>
-                          <td>{staff?.lastName}</td>
-                          <td>{lender.businessName}</td>
-                          <td>{employer.name}</td>
-                          <td>{ippisNumber}</td>
-                          <td>{numeral(amount).format('0,0.00')}</td>
-                          <td>{tenure}</td>
-                          <td>{moment(createdAt).format('lll')}</td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </Table>
+                <ComponentToPrint
+                  ref={el => (this.componentRef = el)}
+                  data={this.state.deductions}
+                />
+
                 <Row>
                   <Col md={3} className="mx-auto my-3 text-center">
                     {this.state.loading ? (
@@ -193,4 +147,56 @@ class SearchDeductions extends React.Component {
     );
   }
 }
+
+class ComponentToPrint extends React.Component {
+  render() {
+    return (
+      <Table striped hover responsive>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Lender Name</th>
+            <th>Employer Name</th>
+            <th>Staff Number(IPPIS)</th>
+            <th>Amount</th>
+            <th>Tenure</th>
+            <th>Uploaded On</th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.props.data.map(
+            (
+              {
+                createdAt,
+                lender,
+                employer,
+                ippisNumber,
+                amount,
+                staff,
+                tenure,
+                _id,
+              },
+              idx,
+            ) => (
+              <tr key={_id}>
+                <th scope="row">{idx + 1}</th>
+                <td>{staff?.firstName || 'N/A'}</td>
+                <td>{staff?.lastName || 'N/A'}</td>
+                <td>{lender.businessName}</td>
+                <td>{employer.name}</td>
+                <td>{ippisNumber}</td>
+                <td>{numeral(amount).format('0,0.00')}</td>
+                <td>{tenure}</td>
+                <td>{moment(createdAt).format('lll')}</td>
+              </tr>
+            ),
+          )}
+        </tbody>
+      </Table>
+    );
+  }
+}
+
 export default SearchDeductions;

@@ -32,6 +32,8 @@ const SearchDeductions = React.lazy(() =>
 const AddLenderAccount = React.lazy(() =>
   import('../../pages/AddLenderAccount'),
 );
+const Staffs = React.lazy(() => import('../../pages/Staffs'));
+
 class MainLayout extends React.Component {
   state = { pageInit: true, user: {}, loading: false };
 
@@ -64,7 +66,7 @@ class MainLayout extends React.Component {
       console.log(error);
     }
   }
-  unsafe_componentWillReceiveProps({ breakpoint }) {
+  unsafe_componentWillMount({ breakpoint }) {
     if (breakpoint !== this.props.breakpoint) {
       this.checkBreakpoint(breakpoint);
     }
@@ -227,7 +229,18 @@ class MainLayout extends React.Component {
                       />
                     )}
                   />
-
+                  <Route
+                    exact
+                    path="/dashboard/staffs"
+                    render={props => (
+                      <Staffs
+                        changeLoading={this.changeLoading}
+                        user={this.state.user}
+                        notify={this.handleNotification}
+                        {...props}
+                      />
+                    )}
+                  />
                   <Redirect to="/404" />
                 </Switch>
               </Suspense>

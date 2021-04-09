@@ -7,7 +7,10 @@ import {
   CardHeader,
   Col,
   Form,
-  FormFeedback,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Table,
   FormGroup,
   CardText,
@@ -62,6 +65,7 @@ const UploadDeductions = props => {
   const [tenure, setTenure] = useState(1);
   const [errorCode, setErrorCode] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
+  const [modal, setModal] = useState(false);
 
   const loadmore = async isNew => {
     try {
@@ -125,9 +129,6 @@ const UploadDeductions = props => {
         '',
         `Deduction ${isUpdate ? 'Updated' : 'Uploaded'} Successfully`,
       );
-    } catch (error) {
-      console.log(error);
-    } finally {
       setIsUpdate(false);
       setErrorCode(null);
       setEmployer('');
@@ -137,6 +138,15 @@ const UploadDeductions = props => {
       setLastName('');
       setAmount('');
       setTenure(1);
+    } catch (error) {
+      console.log(error.response);
+
+      if (error.response && error.response.data.data.errorCode === 5) {
+        setModal(error.response.data.data.lastName);
+        // console.log(error.response.data);
+      }
+      console.log(error);
+    } finally {
       loadmore(true);
       props.changeLoading();
     }
@@ -300,7 +310,27 @@ const UploadDeductions = props => {
     const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
     if (newWindow) newWindow.opener = null;
   };
+  const toggle = () => {
+    setModal(!modal);
+  };
+  const report = async () => {
+    props.changeLoading();
+    try {
+      await patch(
+        `${process.env.REACT_APP_API}staffs/reportlastname/${ippisNumber}`,
+        {
+          suggestedLastName: lastName,
+        },
+      );
 
+      setModal('$successModal$');
+    } catch (error) {
+      props.notify('', 'An error occured when reporting the issue');
+      console.log(error);
+    } finally {
+      props.changeLoading();
+    }
+  };
   return (
     <Page
       title="Upload Deductions"
@@ -309,6 +339,57 @@ const UploadDeductions = props => {
         { name: 'Upload', active: true },
       ]}
     >
+      <Modal
+        isOpen={modal && modal !== '$successModal$'}
+        toggle={toggle}
+        centered
+        backdrop="static"
+        keyboard={false}
+      >
+        <ModalHeader toggle={toggle}>We Could not Process Request</ModalHeader>
+        <ModalBody>
+          The last name supplied do not match the last name of the staff on
+          record
+          <hr />
+          Last Name Supplied: <b>{lastName}</b>
+          <br />
+          Last Name on System: <b>{modal}</b>
+          <hr />
+          <small style={{ color: '#FC5073' }}>
+            Report only if the last name on record is wrong and yours is right
+          </small>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={toggle}>
+            Change Last Name
+          </Button>{' '}
+          <Button color="danger" onClick={report}>
+            Report
+          </Button>
+        </ModalFooter>
+      </Modal>
+      <Modal
+        isOpen={modal && modal === '$successModal$'}
+        toggle={toggle}
+        centered
+        backdrop="static"
+        keyboard={false}
+      >
+        <ModalHeader toggle={toggle}>Issue Reported Successfully</ModalHeader>
+        <ModalBody>
+          Admin has been notified to updated the record of staff number{' '}
+          <b>{ippisNumber}</b>
+          <hr />
+          The issue will be investigated and should be resolved within the next{' '}
+          <b>24hrs</b>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={toggle}>
+            Okay
+          </Button>
+        </ModalFooter>
+      </Modal>
+
       <Row>
         <Col>
           <Button
@@ -344,8 +425,10 @@ const UploadDeductions = props => {
                     <th>Last Name</th>
                     <th>Staff Number</th>
                     <th>Amount</th>
+                    <th>No of Installments</th>
                     <th>Uploaded On</th>
-                    <th>Status</th>
+
+                    <th></th>
                     <th></th>
                   </tr>
                 </thead>
@@ -373,6 +456,7 @@ const UploadDeductions = props => {
                         <td>{lastName || 'N/A'}</td>
                         <td>{ippisNumber}</td>
                         <td>{numeral(amount).format('0,0.00')}</td>
+                        <td>{tenure}</td>
                         <td>{moment(createdAt).format('lll')}</td>
                         <td>
                           {errorCode === 5 ? (
@@ -393,8 +477,10 @@ const UploadDeductions = props => {
                             >
                               Edit Last Name
                             </Button>
+                          ) : status === 'failed' ? (
+                            'Error occured while uploading deduction'
                           ) : (
-                            status
+                            ''
                           )}
                         </td>
                         <td>{errorCode ? log : 'N/A'}</td>

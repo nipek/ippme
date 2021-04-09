@@ -23,7 +23,6 @@ import {
   MdViewCarousel,
   MdViewDay,
   MdViewList,
-  MdWeb,
   MdWidgets,
 } from 'react-icons/md';
 import { NavLink } from 'react-router-dom';
@@ -155,6 +154,13 @@ const navItems = [
     exact: true,
     Icon: MdDashboard,
     isLender: 'all',
+  },
+  {
+    to: '/dashboard/staffs',
+    name: 'Staffs',
+    exact: true,
+    Icon: MdBorderAll,
+    isLender: false,
   },
 ];
 

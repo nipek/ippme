@@ -42,11 +42,12 @@ import {
   CardTitle,
   Col,
   ListGroup,
-  ListGroupItem,
+  Table,
   Row,
 } from 'reactstrap';
 import { getColor } from 'utils/colors';
 import { get } from 'components/axios';
+import moment from 'moment';
 const today = new Date();
 const lastWeek = new Date(
   today.getFullYear(),
@@ -104,23 +105,65 @@ class AdminDashboardPage extends React.Component {
         <Row>
           <Col md="6" sm="12" xs="12">
             <Card>
-              <CardHeader>Employers</CardHeader>
+              <CardHeader>Recent Employers</CardHeader>
               <CardBody>
-                {this.state.employers.map(
+                <Table striped hover responsive>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th> Name</th>
+                      <th>Created At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.employers.map(
+                      ({ _id: id, name: title, createdAt }, idx) => (
+                        <tr key={id}>
+                          <th scope="row">{idx + 1}</th>
+                          <td>{title}</td>
+                          <td>{moment(createdAt).format('lll')}</td>
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </Table>
+                {/* {this.state.employers.map(
                   ({ _id: id, name: title, createdAt }) => (
                     <Employers key={id} title={title} createdAt={createdAt} />
                   ),
-                )}
+                )} */}
               </CardBody>
             </Card>
           </Col>
 
           <Col md="6" sm="12" xs="12">
             <Card>
-              <CardHeader>Lenders</CardHeader>
+              <CardHeader>Recent Lenders</CardHeader>
               <CardBody>
-                {this.state.lenders.map(
-                  ({ _id: id, email, businessName, createdAt }) => (
+                <Table striped hover responsive>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th> Name</th>
+                      <th> Email</th>
+                      <th>Created At</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.lenders.map(
+                      ({ _id: id, email, businessName, createdAt }, idx) => (
+                        <tr key={id}>
+                          <th scope="row">{idx + 1}</th>
+                          <td>{businessName}</td>
+                          <td>{email}</td>
+                          <td>{moment(createdAt).format('lll')}</td>
+                        </tr>
+                      ),
+                    )}
+                  </tbody>
+                </Table>
+                {/* {this.state.lenders.map(
+                  ({ _id: id, email, businessName, createdAt },idx) => (
                     <Lenders
                       key={id}
                       email={email}
@@ -128,7 +171,7 @@ class AdminDashboardPage extends React.Component {
                       createdAt={createdAt}
                     />
                   ),
-                )}
+                )} */}
               </CardBody>
             </Card>
           </Col>
